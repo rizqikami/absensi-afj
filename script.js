@@ -1,9 +1,9 @@
 // Konfigurasi 4 Lokasi Sah (Ganti koordinat sesuai lokasi asli AFJ)
 const authorizedLocations = [
-  { name: "AFJ Jababeka", lat: -6.2, lon: 106.816666 },
-  { name: "AFJ Lippo Cikarang", lat: -6.21, lon: 106.82 },
-  { name: "AFJ Mega Regency", lat: -6.22, lon: 106.83 },
-  { name: "AFJ Pilar", lat: -6.23, lon: 106.84 },
+  { name: "AFJ Jababeka", lat: -6.3142048, lon: 107.1637854 },
+  { name: "AFJ Lippo Cikarang", lat: -6.32635, lon: 107.14125 },
+  { name: "AFJ Mega Regency", lat: -6.35332, lon: 107.11475 },
+  { name: "AFJ Pilar", lat: -6.25754, lon: 107.13521 },
 ];
 
 const maxDistance = 300; // Radius toleransi 300 meter
