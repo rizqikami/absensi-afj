@@ -1,15 +1,16 @@
 // Konfigurasi 4 Lokasi Sah (Ganti koordinat sesuai lokasi asli AFJ)
 const authorizedLocations = [
-  { name: "Kantor Pusat", lat: -6.2, lon: 106.816666 },
-  { name: "Gudang A", lat: -6.21, lon: 106.82 },
-  { name: "Gudang B", lat: -6.22, lon: 106.83 },
-  { name: "Toko Cabang", lat: -6.23, lon: 106.84 },
+  { name: "AFJ Jababeka", lat: -6.2, lon: 106.816666 },
+  { name: "AFJ Lippo Cikarang", lat: -6.21, lon: 106.82 },
+  { name: "AFJ Mega Regency", lat: -6.22, lon: 106.83 },
+  { name: "AFJ Pilar", lat: -6.23, lon: 106.84 },
 ];
 
 const maxDistance = 300; // Radius toleransi 300 meter
 let attendanceStatus = "";
 let detectedLocation = "";
-const urlWebhook = "URL_DEPLOYMENT_GOOGLE_ANDA";
+const urlWebhook =
+  "https://script.google.com/macros/s/AKfycbyv7gZtvehSE2-rTuA-OPYuquQZWu6qEWKaqgm-KDtju4BMTX0LnsvGPXATZPhiiKOx/exec";
 
 const statusDiv = document.getElementById("status");
 const absentBtn = document.getElementById("absentBtn");
