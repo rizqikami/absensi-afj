@@ -1,213 +1,39 @@
 <!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Absensi Mobile</title>
-    <style>
-        :root {
-            --primary: #87CEEB; /* Biru Langit/Light Blue */
-            --secondary: #E0F7FA; /* Soft Milky Blue Background */
-            --text: #333;
-            --success: #4CAF50;
-            --danger: #f44336;
-            --white: #ffffff;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--secondary);
-            color: var(--text);
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-        }
-
-        .container {
-            background-color: var(--white);
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            width: 100%;
-            max-width: 400px;
-            text-align: center;
-        }
-
-        h2 {
-            color: #00838F;
-            margin-bottom: 20px;
-        }
-
-        .info-box {
-            background: #f0f9ff;
-            border-left: 5px solid var(--primary);
-            padding: 10px;
-            margin-bottom: 20px;
-            font-size: 0.9em;
-            text-align: left;
-        }
-
-        .form-group {
-            margin-bottom: 15px;
-            text-align: left;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-            font-size: 0.85em;
-            color: #555;
-        }
-
-        input {
-            width: 90%;
-            padding: 12px;
-            border: 2px solid #ddd;
-            border-radius: 8px;
-            font-size: 16px;
-            outline: none;
-            transition: border-color 0.3s;
-        }
-
-        input:focus {
-            border-color: var(--primary);
-        }
-
-        .btn {
-            background-color: var(--primary);
-            color: var(--white);
-            border: none;
-            padding: 15px;
-            width: 100%;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            margin-top: 10px;
-            transition: background 0.3s;
-        }
-
-        .btn:active {
-            transform: scale(0.98);
-        }
-
-        #statusMsg {
-            margin-top: 20px;
-            font-weight: bold;
-            padding: 10px;
-            border-radius: 5px;
-            display: none;
-        }
-
-        .success { background-color: var(--success); color: white; }
-        .error { background-color: var(--danger); color: white; }
-        .warning { background-color: #FF9800; color: white; }
-
-    </style>
-</head>
+<html>
 <body>
-
-    <div class="container">
-        <h2>📍 Absensi Lokasi</h2>
-        
-        <div class="info-box">
-            <div><strong>Nama:</strong> <span id="empName">-</span></div>
-            <div><strong>Kantor:</strong> <span id="officeName">-</span></div>
-            <div><strong>Jarak:</strong> <span id="distVal">-</span> km</div>
-            <div><strong>Status:</strong> <span id="statusVal">-</span></div>
-        </div>
-
-        <form id="absenForm">
-            <div class="form-group">
-                <label for="employeeId">Nomor Karyawan (ID):</label>
-                <input type="text" id="employeeId" placeholder="Contoh: 2021001" required>
-            </div>
-            
-            <div class="form-group">
-                <label for="officeName">Nama Kantor (Contoh: Jakarta Pusat):</label>
-                <input type="text" id="officeName" placeholder="Pilih atau ketik nama kantor" required>
-            </div>
-
-            <button type="submit" class="btn">📡 Cek Lokasi & Absen</button>
-        </form>
-
-        <div id="statusMsg"></div>
-    </div>
+    <form id="absenForm">
+        <input type="text" id="employeeId" placeholder="ID Karyawan" required><br>
+        <input type="text" id="officeName" placeholder="Nama Kantor" required><br>
+        <button type="submit">Absen Sekarang</button>
+    </form>
+    <div id="statusMsg"></div>
 
     <script>
-        // --- KONFIGURASI SAMA DENGAN GAFE ---
-        const SHEET_ID = '1QkC2bmb12YkqN08M5yck5GvMruo9yk-jphRW0zH8fYs'; // Ganti ID Sheet
-        const SCRIPT_ID = 'AKfycbzhRSWDfbYXg5ixCrGHk970eXsCMGhONdl-MrTUYSYur6kymH_gXq_YYLVYpLq2bXa6Fw'; // Ganti ID Script
-        // --- AKHIR KONFIGURASI ---
-
-        const form = document.getElementById('absenForm');
-        const statusMsg = document.getElementById('statusMsg');
-        const empNameSpan = document.getElementById('empName');
-        const officeNameSpan = document.getElementById('officeName');
-        const distSpan = document.getElementById('distVal');
-        const statusSpan = document.getElementById('statusVal');
-
-        form.addEventListener('submit', async (e) => {
+        const SCRIPT_URL = 'PASTE_WEB_APP_URL_DISINI'; // WAJIB GANTI URL WEB APP ANDA
+        
+        document.getElementById('absenForm').addEventListener('submit', async (e) => {
             e.preventDefault();
+            document.getElementById('statusMsg').innerText = "Mengambil lokasi...";
             
-            const id = document.getElementById('employeeId').value;
-            const office = document.getElementById('officeName').value;
-
-            if(!id || !office) {
-                showAlert('Mohon isi semua kolom data', 'error');
-                return;
-            }
-
-            // Tampilkan loading
-            showAlert('Menghubungkan ke Satellite...', 'warning');
-            
-            try {
-                // Panggil Google Apps Script
-                const response = await fetch(`https://script.google.com/macros/s/${SCRIPT_ID}/exec`, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-                    body: `empId=${encodeURIComponent(id)}&office=${encodeURIComponent(office)}`
-                });
+            navigator.geolocation.getCurrentPosition(async (pos) => {
+                const payload = {
+                    employee_id: document.getElementById('employeeId').value,
+                    office_name: document.getElementById('officeName').value,
+                    lat: pos.coords.latitude,
+                    lng: pos.coords.longitude,
+                    tipe_absen: "Masuk"
+                };
                 
-                const data = await response.json();
-
-                if(data.success) {
-                    // Update Tampilan
-                    officeNameSpan.innerText = office;
-                    distSpan.innerText = data.distance;
-                    empNameSpan.innerText = data.employee.nama_karyawan;
-                    
-                    if(data.status === "Diluar Kantor") {
-                        showAlert(`DITOLAK: Jarak ${data.distance} km. Tidak masuk radius kantor.`, 'error');
-                    } else {
-                        showAlert('BERHASIL: Absensi berhasil terekam! 🎉', 'success');
-                        // Opsional: Reset form
-                        // form.reset();
-                    }
-                } else {
-                    showAlert('Error: ' + data.message, 'error');
-                }
-
-            } catch (err) {
-                showAlert('Gagal koneksi server. Cek koneksi internet.', 'error');
-                console.error(err);
-            }
+                const res = await fetch(SCRIPT_URL, { 
+                    method: 'POST', 
+                    body: JSON.stringify(payload) 
+                });
+                const data = await res.json();
+                document.getElementById('statusMsg').innerText = data.message;
+            }, (err) => {
+                document.getElementById('statusMsg').innerText = "GPS Gagal: " + err.message;
+            });
         });
-
-        function showAlert(msg, type) {
-            statusMsg.innerText = msg;
-            statusMsg.className = type;
-            statusMsg.style.display = 'block';
-            
-            // Sembunyikan otomatis setelah 5 detik
-            setTimeout(() => {
-                statusMsg.style.display = 'none';
-            }, 5000);
-        }
     </script>
 </body>
 </html>
