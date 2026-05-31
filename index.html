@@ -21,6 +21,7 @@
         <h2>Absensi Karyawan AFJ</h2>
         <div class="info-panel">
             <div class="info-row"><span>Nama:</span> <span id="namaEmp">-</span></div>
+            <div class="info-row"><span>Jam Masuk:</span> <span id="jamMasukVal">-</span></div>
             <div class="info-row"><span>Lokasi:</span> <span id="lokasiVal">-</span></div>
             <div class="info-row"><span>Jarak:</span> <span id="jarakVal">- km</span></div>
         </div>
@@ -31,7 +32,7 @@
     </div>
 
     <script>
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyLZHpfyU7euZONDdNSoWWxL-pYmZLBeMEvJQsKth6YsVpPDrvNzlgYyjcluQT2nDxs0Q/exec';
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx0751TutVUVdcdxIAsHqescheLB07aMpu8wOHm9iW27qYCwflCGXF8AGqd0cJ_X61T/exec';
         async function getInfo() {
             const id = document.getElementById('employeeId').value;
             const btn = document.getElementById('btnAction');
@@ -41,12 +42,17 @@
                 const data = await res.json();
                 if (data.status === "success") {
                     document.getElementById('namaEmp').innerText = data.nama;
+                    document.getElementById('jamMasukVal').innerText = data.jamMasuk;
                     document.getElementById('lokasiVal').innerText = data.office;
                     document.getElementById('jarakVal').innerText = data.distance + " km";
-                    btn.disabled = false; btn.className = "active";
-                    btn.innerText = "📡 Absen " + data.nextAction;
-                    btn.dataset.tipe = data.nextAction;
-                    btn.style.backgroundColor = (data.nextAction === "Pulang") ? "#D32F2F" : "#0288D1";
+                    if(data.nextAction === "Selesai") {
+                        btn.disabled = true; btn.innerText = "Sudah Absen Hari Ini"; btn.style.backgroundColor = "#7f8c8d";
+                    } else {
+                        btn.disabled = false; btn.className = "active";
+                        btn.innerText = "📡 Absen " + data.nextAction;
+                        btn.dataset.tipe = data.nextAction;
+                        btn.style.backgroundColor = (data.nextAction === "Pulang") ? "#D32F2F" : "#0288D1";
+                    }
                 }
             });
         }
