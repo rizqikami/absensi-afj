@@ -32,7 +32,7 @@
     </div>
 
     <script>
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx0751TutVUVdcdxIAsHqescheLB07aMpu8wOHm9iW27qYCwflCGXF8AGqd0cJ_X61T/exec';
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyvdbCVvNNScBrZH321qPI5axav94ITjdNF4uUH7C-JBugCw__yLmhEajtR971335QifQ/exec';
         async function getInfo() {
             const id = document.getElementById('employeeId').value;
             const btn = document.getElementById('btnAction');
@@ -45,14 +45,10 @@
                     document.getElementById('jamMasukVal').innerText = data.jamMasuk;
                     document.getElementById('lokasiVal').innerText = data.office;
                     document.getElementById('jarakVal').innerText = data.distance + " km";
-                    if(data.nextAction === "Selesai") {
-                        btn.disabled = true; btn.innerText = "Sudah Absen Hari Ini"; btn.style.backgroundColor = "#7f8c8d";
-                    } else {
-                        btn.disabled = false; btn.className = "active";
-                        btn.innerText = "📡 Absen " + data.nextAction;
-                        btn.dataset.tipe = data.nextAction;
-                        btn.style.backgroundColor = (data.nextAction === "Pulang") ? "#D32F2F" : "#0288D1";
-                    }
+                    btn.disabled = false; btn.className = "active";
+                    btn.innerText = "📡 Absen " + data.nextAction;
+                    btn.dataset.tipe = data.nextAction;
+                    btn.style.backgroundColor = (data.nextAction === "Pulang") ? "#D32F2F" : "#0288D1";
                 }
             });
         }
