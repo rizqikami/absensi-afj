@@ -5,59 +5,56 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistem Absensi</title>
     <style>
-        /* CSS: Mengatur tampilan agar rapi dan tidak polos */
-        body { font-family: 'Segoe UI', sans-serif; background-color: #E0F7FA; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        body { font-family: 'Segoe UI', sans-serif; background-color: #E0F7FA; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px; }
         .container { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
-        h2 { color: #00838F; }
+        .info-box { background: #f0f9ff; border-left: 5px solid #87CEEB; padding: 15px; margin-bottom: 20px; text-align: left; border-radius: 5px; font-size: 0.9em; }
         input { width: 100%; padding: 12px; margin: 10px 0; border: 2px solid #ddd; border-radius: 8px; box-sizing: border-box; }
         button { width: 100%; padding: 15px; background-color: #87CEEB; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
-        #statusMsg { margin-top: 20px; padding: 10px; border-radius: 5px; font-weight: bold; }
+        #statusMsg { margin-top: 20px; padding: 10px; font-weight: bold; }
     </style>
 </head>
 <body>
-
     <div class="container">
-        <h2>📍 Absensi Mobile</h2>
+        <h2>📍 Absensi Otomatis</h2>
+        <div class="info-box">
+            <div>Nama: <span id="empName">-</span></div>
+            <div>Kantor: <span id="officeNameVal">-</span></div>
+            <div>Jarak: <span id="distVal">-</span> km</div>
+            <div>Status: <span id="statusVal">-</span></div>
+        </div>
         <form id="absenForm">
-            <input type="text" id="employeeId" placeholder="ID Karyawan" required>
-            <input type="text" id="officeName" placeholder="Nama Kantor" required>
+            <input type="text" id="employeeId" placeholder="Masukkan ID Karyawan" required>
             <button type="submit">📡 Absen Sekarang</button>
         </form>
         <div id="statusMsg"></div>
     </div>
 
     <script>
-        // --- BAGIAN INI SAJA YANG PERLU ANDA GANTI ---
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzHfwX8tPgAZBDfydJtnCxXy7FsyHGs5jKVrTwZN9uz82AG7qZAEBVTE1houZmcUPwTkg/exec'; 
-        // ---------------------------------------------
+        const SCRIPT_URL = 'PASTE_URL_WEB_APP_ANDA_DISINI'; 
 
         document.getElementById('absenForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const msg = document.getElementById('statusMsg');
-            msg.innerText = "Mengambil lokasi...";
+            document.getElementById('statusMsg').innerText = "Mendeteksi lokasi...";
             
             navigator.geolocation.getCurrentPosition(async (pos) => {
                 const payload = {
                     employee_id: document.getElementById('employeeId').value,
-                    office_name: document.getElementById('officeName').value,
                     lat: pos.coords.latitude,
                     lng: pos.coords.longitude,
                     tipe_absen: "Masuk"
                 };
                 
-                try {
-                    const res = await fetch(SCRIPT_URL, { 
-                        method: 'POST', 
-                        body: JSON.stringify(payload) 
-                    });
-                    const data = await res.json();
-                    msg.innerText = data.message;
-                } catch (err) {
-                    msg.innerText = "Error: Gagal terhubung ke server.";
+                const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
+                const data = await res.json();
+                
+                document.getElementById('statusMsg').innerText = data.message;
+                if(data.status === "success") {
+                    document.getElementById('empName').innerText = data.nama;
+                    document.getElementById('officeNameVal').innerText = data.office;
+                    document.getElementById('distVal').innerText = data.distance;
+                    document.getElementById('statusVal').innerText = data.message;
                 }
-            }, (err) => {
-                msg.innerText = "GPS Gagal: Pastikan GPS aktif.";
-            });
+            }, (err) => { alert("Aktifkan GPS!"); });
         });
     </script>
 </body>
