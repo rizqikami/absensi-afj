@@ -4,17 +4,20 @@
     <meta charset="UTF-8">
     <title>Sistem Absensi Karyawan AFJ</title>
     <style>
-        :root { --bg: #E0F7FA; --btn: #0288D1; --danger: #D32F2F; }
-        body { font-family: sans-serif; background-color: var(--bg); display: flex; justify-content: center; padding-top: 50px; }
-        .card { background: white; padding: 25px; border-radius: 20px; width: 350px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
-        input { width: 100%; padding: 12px; margin: 10px 0; border: 2px solid #ddd; border-radius: 10px; box-sizing: border-box; }
-        button { width: 100%; padding: 12px; background: #ccc; color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; }
+        :root { --primary: #2c3e50; --sea-blue: #E0F7FA; --sea-accent: #4FC3F7; --btn-blue: #0288D1; }
+        body { font-family: 'Segoe UI', sans-serif; background-color: var(--sea-blue); display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .card { background: white; padding: 2.5rem; border-radius: 25px; box-shadow: 0 10px 30px rgba(2, 136, 209, 0.15); width: 100%; max-width: 400px; text-align: center; }
+        h2 { color: var(--primary); margin-bottom: 1.5rem; }
+        .info-panel { background: #F1F9FD; padding: 10px; border-radius: 10px; margin-bottom: 15px; color: #37474F; font-weight: 600; }
+        input { width: 100%; padding: 14px; margin-bottom: 15px; border: 2px solid #B3E5FC; border-radius: 12px; box-sizing: border-box; font-size: 1rem; }
+        button { width: 100%; padding: 14px; background-color: #B0BEC5; color: white; border: none; border-radius: 12px; font-weight: 600; cursor: not-allowed; }
+        button.active { background-color: var(--btn-blue); cursor: pointer; }
     </style>
 </head>
 <body>
     <div class="card">
-        <h2>Absensi AFJ</h2>
-        <div id="info">Nama: <span id="namaEmp">-</span></div>
+        <h2>Absensi Karyawan AFJ</h2>
+        <div class="info-panel">Nama: <span id="namaEmp">-</span></div>
         <form id="absenForm">
             <input type="text" id="employeeId" placeholder="Masukkan ID Karyawan" oninput="getInfo()" required>
             <button type="submit" id="btnAction" disabled>Masukkan ID Dahulu</button>
@@ -22,40 +25,46 @@
     </div>
 
     <script>
-        const SCRIPT_URL = 'Phttps://script.google.com/macros/s/AKfycbzOEOvBVJuTQF1Hc5T_0-205Ie45BN-HkLuruMlL5ILcV9yXmR1AEmoBAgwevIHKLAjiQ/exec';
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzOEOvBVJuTQF1Hc5T_0-205Ie45BN-HkLuruMlL5ILcV9yXmR1AEmoBAgwevIHKLAjiQ/exec';
 
         async function getInfo() {
             const id = document.getElementById('employeeId').value;
             const btn = document.getElementById('btnAction');
-            if (id.length < 3) { btn.disabled = true; return; }
+            const namaEl = document.getElementById('namaEmp');
             
-            const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'getInfo', employee_id: id }) });
-            const data = await res.json();
-            if (data.status === "success") {
-                document.getElementById('namaEmp').innerText = data.nama;
-                btn.disabled = false;
-                btn.innerText = "📡 Absen " + data.nextAction;
-                btn.dataset.tipe = data.nextAction;
-                btn.style.backgroundColor = (data.nextAction === "Pulang") ? "#D32F2F" : "#0288D1";
+            if (id.length < 3) { 
+                btn.disabled = true; btn.className = ""; btn.innerText = "Masukkan ID Dahulu"; 
+                namaEl.innerText = "-"; return; 
             }
+            
+            try {
+                const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'getInfo', employee_id: id }) });
+                const data = await res.json();
+                if (data.status === "success") {
+                    namaEl.innerText = data.nama;
+                    btn.disabled = false;
+                    btn.className = "active";
+                    btn.innerText = "📡 Absen " + data.nextAction;
+                    btn.dataset.tipe = data.nextAction;
+                    btn.style.backgroundColor = (data.nextAction === "Pulang") ? "#D32F2F" : "#0288D1";
+                }
+            } catch(e) { console.error("Gagal koneksi ke server"); }
         }
 
         document.getElementById('absenForm').addEventListener('submit', async (e) => {
             e.preventDefault();
+            const btn = document.getElementById('btnAction');
+            btn.innerText = "Memproses...";
             navigator.geolocation.getCurrentPosition(async (pos) => {
-                const res = await fetch(SCRIPT_URL, { 
-                    method: 'POST', 
-                    body: JSON.stringify({ 
-                        employee_id: document.getElementById('employeeId').value,
-                        tipe_absen: document.getElementById('btnAction').dataset.tipe,
-                        lat: pos.coords.latitude,
-                        lng: pos.coords.longitude
-                    }) 
-                });
+                const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ 
+                    employee_id: document.getElementById('employeeId').value,
+                    tipe_absen: btn.dataset.tipe,
+                    lat: pos.coords.latitude, lng: pos.coords.longitude
+                })});
                 const data = await res.json();
                 alert(data.message);
                 location.reload();
-            });
+            }, () => { alert("GPS tidak aktif!"); btn.innerText = "Coba Lagi"; });
         });
     </script>
 </body>
