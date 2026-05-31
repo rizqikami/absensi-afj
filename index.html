@@ -1,55 +1,81 @@
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Sistem Absensi Karyawan AFJ</title>
     <style>
-        body { font-family: sans-serif; padding: 20px; display: flex; justify-content: center; background: #f4f7f6; }
-        .card { width: 100%; max-width: 400px; padding: 20px; background: white; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        input, button { width: 100%; padding: 15px; margin-bottom: 10px; border-radius: 10px; border: 1px solid #ccc; box-sizing: border-box; }
-        button { background: #0288D1; color: white; font-weight: bold; cursor: pointer; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border-bottom: 1px solid #eee; padding: 8px; text-align: left; }
+        :root { --primary: #2c3e50; --sea-blue: #E0F7FA; --btn-blue: #0288D1; --btn-loading: #7f8c8d; }
+        body { font-family: 'Segoe UI', sans-serif; background-color: var(--sea-blue); margin: 0; padding: 15px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .card { background: white; padding: 2rem; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 400px; box-sizing: border-box; }
+        h2 { color: var(--primary); text-align: center; }
+        .info-panel { background: #F1F9FD; padding: 15px; border-radius: 12px; border-left: 5px solid var(--btn-blue); margin-bottom: 20px; font-size: 0.9rem; }
+        .info-row { display: flex; justify-content: space-between; margin-bottom: 8px; }
+        input { width: 100%; padding: 15px; margin-bottom: 15px; border: 2px solid #B3E5FC; border-radius: 12px; box-sizing: border-box; font-size: 16px; }
+        button { width: 100%; padding: 15px; background-color: #B0BEC5; color: white; border: none; border-radius: 12px; font-weight: bold; cursor: not-allowed; font-size: 1rem; transition: 0.3s; }
+        button.active { background-color: var(--btn-blue); cursor: pointer; }
+        /* Style saat loading */
+        button.loading { background-color: var(--btn-loading) !important; cursor: wait; }
     </style>
 </head>
 <body>
     <div class="card">
-        <h2>Absensi AFJ</h2>
-        <input type="text" id="id" placeholder="ID Karyawan" oninput="checkStatus()">
-        <button id="btn" onclick="submitAbsen()" disabled>Masukkan ID Dahulu</button>
-        
-        <h3>Log Hari Ini</h3>
-        <table>
-            <thead><tr><th>Nama</th><th>Masuk</th><th>Keluar</th></tr></thead>
-            <tbody id="logBody"></tbody>
-        </table>
+        <h2>Absensi Karyawan AFJ</h2>
+        <div class="info-panel">
+            <div class="info-row"><span>Nama:</span> <span id="namaEmp">-</span></div>
+            <div class="info-row"><span>Jam Masuk:</span> <span id="jamMasukVal">-</span></div>
+            <div class="info-row"><span>Lokasi:</span> <span id="lokasiVal">-</span></div>
+            <div class="info-row"><span>Jarak:</span> <span id="jarakVal">- km</span></div>
+        </div>
+        <form id="absenForm">
+            <input type="text" id="employeeId" placeholder="Masukkan ID Karyawan" oninput="getInfo()" required>
+            <button type="submit" id="btnAction" disabled>Masukkan ID Dahulu</button>
+        </form>
     </div>
 
     <script>
-        const URL = 'https://script.google.com/macros/s/AKfycbwkf-eapiPGngwn4vWdJc1vnnsnHRD1Q-y1-K8W3z8NbqFaG1gssWTm9OqZbFlq_aQVkA/exec';
-        async function checkStatus() {
-            const id = document.getElementById('id').value;
-            if(id.length < 3) return;
-            const res = await fetch(URL, {method:'POST', body:JSON.stringify({action:'getInfo', employee_id:id})});
-            const data = await res.json();
-            const btn = document.getElementById('btn');
-            btn.disabled = false;
-            btn.innerText = "Absen " + data.nextAction;
-            btn.dataset.tipe = data.nextAction;
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxTnXgtmioNjpLI4NMFHSD2FYZWchOcfvQBjCKaWBa58H7x64IgdvJ-_Hke5Jarlyujpg/exec';
+        
+        async function getInfo() {
+            const id = document.getElementById('employeeId').value;
+            const btn = document.getElementById('btnAction');
+            if (id.length < 3) { btn.disabled = true; btn.className = ""; btn.innerText = "Masukkan ID Dahulu"; return; }
+            
+            // Indikator loading saat ambil info
+            btn.innerText = "Mengecek Data...";
+            
+            navigator.geolocation.getCurrentPosition(async (pos) => {
+                const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'getInfo', employee_id: id, lat: pos.coords.latitude, lng: pos.coords.longitude }) });
+                const data = await res.json();
+                if (data.status === "success") {
+                    document.getElementById('namaEmp').innerText = data.nama;
+                    document.getElementById('jamMasukVal').innerText = data.jamMasuk;
+                    document.getElementById('lokasiVal').innerText = data.office;
+                    document.getElementById('jarakVal').innerText = data.distance + " km";
+                    btn.disabled = false; btn.className = "active";
+                    btn.innerText = "📡 Absen " + data.nextAction;
+                    btn.dataset.tipe = data.nextAction;
+                    btn.style.backgroundColor = (data.nextAction === "Pulang") ? "#D32F2F" : "#0288D1";
+                }
+            }, (err) => { btn.innerText = "Gagal Akses GPS"; });
         }
-        async function submitAbsen() {
-            const id = document.getElementById('id').value;
-            const tipe = document.getElementById('btn').dataset.tipe;
-            await fetch(URL, {method:'POST', body:JSON.stringify({employee_id: id, tipe_absen: tipe, nama: "Karyawan"})});
-            alert("Absen " + tipe + " Berhasil!");
-            location.reload();
-        }
-        async function loadLogs() {
-            const res = await fetch(URL, {method:'POST', body:JSON.stringify({action:'getLogs'})});
-            const data = await res.json();
-            document.getElementById('logBody').innerHTML = data.logs.map(r => 
-                `<tr><td>${r.nama}</td><td>${r.masuk}</td><td>${r.keluar}</td></tr>`).join('');
-        }
-        window.onload = loadLogs;
+
+        document.getElementById('absenForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('btnAction');
+            
+            // Mencegah klik ganda
+            btn.disabled = true;
+            btn.classList.add('loading');
+            btn.innerText = "Tunggu... Sedang Proses";
+
+            navigator.geolocation.getCurrentPosition(async (pos) => {
+                const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ employee_id: document.getElementById('employeeId').value, tipe_absen: btn.dataset.tipe, lat: pos.coords.latitude, lng: pos.coords.longitude })});
+                const data = await res.json();
+                alert(data.message);
+                location.reload();
+            });
+        });
     </script>
 </body>
 </html>
