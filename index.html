@@ -3,63 +3,70 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Absensi</title>
+    <title>Sistem Presensi Enterprise</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background-color: #E0F7FA; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px; }
-        .container { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
-        .info-box { background: #f0f9ff; border-left: 5px solid #87CEEB; padding: 15px; margin-bottom: 20px; text-align: left; border-radius: 5px; font-size: 0.9em; }
-        input { width: 100%; padding: 12px; margin: 10px 0; border: 2px solid #ddd; border-radius: 8px; box-sizing: border-box; }
-        button { width: 100%; padding: 15px; background-color: #87CEEB; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
-        #statusMsg { margin-top: 20px; padding: 10px; font-weight: bold; }
+        :root { --primary: #2c3e50; --accent: #3498db; --bg: #f4f7f6; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: var(--bg); display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .card { background: white; padding: 2.5rem; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.08); width: 100%; max-width: 420px; }
+        h2 { color: var(--primary); margin-bottom: 0.5rem; text-align: center; }
+        .subtitle { color: #7f8c8d; text-align: center; margin-bottom: 2rem; font-size: 0.9rem; }
+        .info-panel { background: #f8f9fa; padding: 1.2rem; border-radius: 12px; border-left: 5px solid var(--accent); margin-bottom: 1.5rem; }
+        .info-row { display: flex; justify-content: space-between; margin-bottom: 8px; }
+        .info-row span:first-child { font-weight: 600; color: #555; }
+        input { width: 100%; padding: 14px; margin-bottom: 15px; border: 1px solid #dcdde1; border-radius: 10px; box-sizing: border-box; font-size: 1rem; }
+        button { width: 100%; padding: 14px; background-color: var(--accent); color: white; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; transition: 0.3s; }
+        button:hover { background-color: #2980b9; }
+        #statusMsg { margin-top: 1.5rem; padding: 12px; border-radius: 8px; font-weight: 500; text-align: center; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h2>📍 Absensi Otomatis</h2>
-        <div class="info-box">
-            <div>Nama: <span id="empName">-</span></div>
-            <div>Kantor: <span id="officeNameVal">-</span></div>
-            <div>Jarak: <span id="distVal">-</span> km</div>
-            <div>Status: <span id="statusVal">-</span></div>
+    <div class="card">
+        <h2>Sistem Presensi Karyawan</h2>
+        <p class="subtitle">Berbasis Lokasi Geografis (Geo-Tagging)</p>
+        <div class="info-panel">
+            <div class="info-row"><span>Nama:</span> <span id="empName">-</span></div>
+            <div class="info-row"><span>Lokasi:</span> <span id="officeNameVal">-</span></div>
+            <div class="info-row"><span>Jarak:</span> <span id="distVal">-</span> km</div>
         </div>
         <form id="absenForm">
-            <input type="text" id="employeeId" placeholder="Masukkan ID Karyawan" required>
-            <button type="submit">📡 Absen Sekarang</button>
+            <input type="text" id="employeeId" onblur="checkStatus()" placeholder="Masukkan ID Karyawan" required>
+            <button type="submit" id="btnAbsen">📡 Proses Presensi</button>
         </form>
         <div id="statusMsg"></div>
     </div>
 
     <script>
-        // GANTI URL DI BAWAH INI DENGAN URL WEB APP HASIL DEPLOY TERBARU
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwGl1O1Q1XA8oFARfSDXD-Mu_eRC-vUlQGjNlQsRkiN87qzB4mOiZJbqCOpqKtRGrk2Zw/exec'; 
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxfxmgw25BYCGWxKjhKu1RjHj8KFDiGUwvKqxgWjxVFqeObaPPRKT0hf7V9mKTo0CxIRQ/exec'; 
+
+        async function checkStatus() {
+            const id = document.getElementById('employeeId').value;
+            if (!id) return;
+            const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'check', employee_id: id }) });
+            const data = await res.json();
+            const btn = document.getElementById('btnAbsen');
+            btn.innerText = (data.nextAction === "Pulang") ? "📡 Absen Pulang" : "📡 Absen Masuk";
+            btn.style.backgroundColor = (data.nextAction === "Pulang") ? "#e74c3c" : "#3498db";
+        }
 
         document.getElementById('absenForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            document.getElementById('statusMsg').innerText = "Mendeteksi lokasi...";
-            
+            document.getElementById('statusMsg').innerText = "Verifikasi lokasi...";
             navigator.geolocation.getCurrentPosition(async (pos) => {
                 const payload = {
                     employee_id: document.getElementById('employeeId').value,
+                    tipe_absen: document.getElementById('btnAbsen').innerText.replace("📡 Absen ", ""),
                     lat: pos.coords.latitude,
-                    lng: pos.coords.longitude,
-                    tipe_absen: "Masuk"
+                    lng: pos.coords.longitude
                 };
-                
-                try {
-                    const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
-                    const data = await res.json();
-                    
-                    document.getElementById('statusMsg').innerText = data.message;
-                    if(data.status === "success") {
-                        document.getElementById('empName').innerText = data.nama;
-                        document.getElementById('officeNameVal').innerText = data.office;
-                        document.getElementById('distVal').innerText = data.distance;
-                        document.getElementById('statusVal').innerText = data.message;
-                    }
-                } catch(err) {
-                    alert("Gagal terhubung ke server.");
+                const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
+                const data = await res.json();
+                document.getElementById('statusMsg').innerText = data.message;
+                if(data.status === "success") {
+                    document.getElementById('empName').innerText = data.nama;
+                    document.getElementById('officeNameVal').innerText = data.office;
+                    document.getElementById('distVal').innerText = data.distance;
                 }
-            }, (err) => { alert("Pastikan GPS HP Anda aktif!"); });
+            }, (err) => { alert("Mohon aktifkan GPS perangkat Anda."); });
         });
     </script>
 </body>
