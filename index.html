@@ -2,33 +2,34 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Sistem Absensi AFJ</title>
     <style>
         :root { --primary: #2c3e50; --sea-blue: #E0F7FA; --btn-blue: #0288D1; }
         body { font-family: sans-serif; background-color: var(--sea-blue); padding: 20px; display: flex; justify-content: center; }
         .card { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
+        .info-panel { font-size: 0.9rem; margin-bottom:15px; border-bottom: 2px solid #eee; padding-bottom: 10px; }
         input { width: 100%; padding: 15px; margin-bottom: 10px; border: 2px solid #B3E5FC; border-radius: 12px; box-sizing: border-box; }
         button { width: 100%; padding: 15px; background: #B0BEC5; color: white; border: none; border-radius: 12px; font-weight: bold; }
         button.active { background: var(--btn-blue); cursor: pointer; }
-        .scroll-area { max-height: 300px; overflow-y: auto; border: 1px solid #ddd; border-radius: 12px; margin-top: 20px; }
-        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-        th { background: #f8f9fa; padding: 10px; text-align: left; position: sticky; top: 0; }
-        td { padding: 10px; border-bottom: 1px solid #eee; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.85rem; }
+        th { background: #f8f9fa; padding: 8px; }
+        td { padding: 8px; border-bottom: 1px solid #eee; text-align: center; }
     </style>
 </head>
 <body>
     <div class="card">
         <h2>Absensi AFJ</h2>
-        <div style="font-size: 0.9rem; margin-bottom:15px;">
+        <div class="info-panel">
             <p>Nama: <span id="namaEmp">-</span></p>
             <p>Jam Masuk: <span id="jamMasukVal">-</span></p>
+            <p>Lokasi: <span id="lokasiVal">-</span></p>
+            <p>Jarak: <span id="jarakVal">- km</span></p>
         </div>
         <form id="absenForm">
             <input type="text" id="employeeId" placeholder="ID Karyawan" oninput="getInfo()" autocomplete="off" required>
             <button type="submit" id="btnAction" disabled>Masukkan ID</button>
         </form>
-        <div class="scroll-area">
+        <div style="max-height: 250px; overflow-y: auto;">
             <table>
                 <thead><tr><th>Nama</th><th>Masuk</th><th>Keluar</th></tr></thead>
                 <tbody id="logBody"></tbody>
@@ -36,7 +37,7 @@
         </div>
     </div>
     <script>
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwH6mrYcV1toiaKroLgde4VcNZh5lTj-Cua50c7fIenbkHLR67w7VdKzUw0hfkL_O6CXA/exec';
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyDab2cp1Cj4heg5WIO41w2QlMZtpi8j9jfIcXJ8SmCSZ0wPAJ-WCD9IKK8zrsHjdpg1g/exec';
         async function getInfo() {
             const id = document.getElementById('employeeId').value;
             const btn = document.getElementById('btnAction');
@@ -47,6 +48,8 @@
                 if(data.status === "success") {
                     document.getElementById('namaEmp').innerText = data.nama;
                     document.getElementById('jamMasukVal').innerText = data.jamMasuk;
+                    document.getElementById('lokasiVal').innerText = data.office;
+                    document.getElementById('jarakVal').innerText = data.distance + " km";
                     btn.disabled = false; btn.className = "active";
                     btn.innerText = "Absen " + data.nextAction;
                     btn.dataset.tipe = data.nextAction;
