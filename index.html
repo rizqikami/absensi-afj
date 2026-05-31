@@ -5,49 +5,36 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistem Absensi Karyawan AFJ</title>
     <style>
-        :root { 
-            --primary: #2c3e50; 
-            --sea-blue: #E0F7FA; 
-            --sea-accent: #4FC3F7; 
-            --btn-blue: #0288D1;
-        }
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: var(--sea-blue); display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
-        .card { background: white; padding: 2.5rem; border-radius: 25px; box-shadow: 0 10px 30px rgba(2, 136, 209, 0.15); width: 100%; max-width: 420px; }
-        h2 { color: var(--primary); margin-bottom: 0.5rem; text-align: center; }
-        .subtitle { color: #546E7A; text-align: center; margin-bottom: 2rem; font-size: 0.9rem; }
-        
-        .info-panel { background: #F1F9FD; padding: 1.2rem; border-radius: 15px; border-left: 5px solid var(--sea-accent); margin-bottom: 1.5rem; }
+        :root { --primary: #2c3e50; --sea-blue: #E0F7FA; --sea-accent: #4FC3F7; --btn-blue: #0288D1; }
+        body { font-family: 'Segoe UI', sans-serif; background-color: var(--sea-blue); display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px; }
+        .card { background: white; padding: 2.5rem; border-radius: 25px; box-shadow: 0 10px 30px rgba(2, 136, 209, 0.15); width: 100%; max-width: 420px; text-align: center; }
+        h2 { color: var(--primary); margin-bottom: 0.5rem; }
+        .subtitle { color: #546E7A; margin-bottom: 2rem; font-size: 0.9rem; }
+        .info-panel { background: #F1F9FD; padding: 1.2rem; border-radius: 15px; border-left: 5px solid var(--sea-accent); margin-bottom: 1.5rem; text-align: left; }
         .info-row { display: flex; justify-content: space-between; margin-bottom: 8px; color: #37474F; }
-        .info-row span:first-child { font-weight: 600; }
-
-        input { width: 100%; padding: 14px; margin-bottom: 15px; border: 2px solid #B3E5FC; border-radius: 12px; box-sizing: border-box; font-size: 1rem; }
+        input { width: 100%; padding: 14px; margin-bottom: 15px; border: 2px solid #B3E5FC; border-radius: 12px; box-sizing: border-box; }
         button { width: 100%; padding: 14px; background-color: var(--btn-blue); color: white; border: none; border-radius: 12px; font-weight: 600; cursor: pointer; transition: 0.3s; }
-        button:hover { background-color: #0277BD; }
-        
-        #statusMsg { margin-top: 1.5rem; padding: 12px; border-radius: 10px; font-weight: 500; text-align: center; color: var(--primary); }
+        #statusMsg { margin-top: 1.5rem; padding: 12px; border-radius: 10px; font-weight: 500; }
     </style>
 </head>
 <body>
-
     <div class="card">
         <h2>Sistem Absensi Karyawan AFJ</h2>
-        <p class="subtitle">Platform Absensi Digital Terintegrasi</p>
-        
+        <p class="subtitle">Platform Presensi Digital</p>
         <div class="info-panel">
             <div class="info-row"><span>Nama:</span> <span id="empName">-</span></div>
             <div class="info-row"><span>Lokasi:</span> <span id="officeNameVal">-</span></div>
             <div class="info-row"><span>Jarak:</span> <span id="distVal">-</span> km</div>
         </div>
-
         <form id="absenForm">
             <input type="text" id="employeeId" onblur="checkStatus()" placeholder="Masukkan ID Karyawan" required>
-            <button type="submit" id="btnAbsen">📡 Proses Presensi</button>
+            <button type="submit" id="btnAbsen">📡 Absen Masuk</button>
         </form>
         <div id="statusMsg"></div>
     </div>
 
     <script>
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxfxmgw25BYCGWxKjhKu1RjHj8KFDiGUwvKqxgWjxVFqeObaPPRKT0hf7V9mKTo0CxIRQ/exec'; 
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxjGmG1hZrNhW5Ll9qWHFIRHedqL_yinoaC5A4LeTCNTSAbxMI0BT06aiHVcffW7BLp3g/exec'; 
 
         async function checkStatus() {
             const id = document.getElementById('employeeId').value;
@@ -55,17 +42,20 @@
             const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'check', employee_id: id }) });
             const data = await res.json();
             const btn = document.getElementById('btnAbsen');
-            btn.innerText = (data.nextAction === "Pulang") ? "📡 Absen Pulang" : "📡 Absen Masuk";
+            // Simpan status di atribut data agar tidak terbawa ke database sebagai teks
+            btn.dataset.tipe = (data.nextAction === "Pulang") ? "Pulang" : "Masuk";
+            btn.innerText = "📡 Absen " + btn.dataset.tipe;
             btn.style.backgroundColor = (data.nextAction === "Pulang") ? "#D32F2F" : "#0288D1";
         }
 
         document.getElementById('absenForm').addEventListener('submit', async (e) => {
             e.preventDefault();
+            const btn = document.getElementById('btnAbsen');
             document.getElementById('statusMsg').innerText = "Verifikasi lokasi...";
             navigator.geolocation.getCurrentPosition(async (pos) => {
                 const payload = {
                     employee_id: document.getElementById('employeeId').value,
-                    tipe_absen: document.getElementById('btnAbsen').innerText.replace("📡 Absen ", ""),
+                    tipe_absen: btn.dataset.tipe,
                     lat: pos.coords.latitude,
                     lng: pos.coords.longitude
                 };
@@ -73,11 +63,12 @@
                 const data = await res.json();
                 document.getElementById('statusMsg').innerText = data.message;
                 if(data.status === "success") {
+                    checkStatus(); // Refresh tombol
                     document.getElementById('empName').innerText = data.nama;
                     document.getElementById('officeNameVal').innerText = data.office;
                     document.getElementById('distVal').innerText = data.distance;
                 }
-            }, (err) => { alert("Mohon aktifkan GPS perangkat Anda."); });
+            }, (err) => { alert("Mohon aktifkan GPS."); });
         });
     </script>
 </body>
