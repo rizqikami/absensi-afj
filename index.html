@@ -7,17 +7,26 @@
     <style>
         body { font-family: sans-serif; background: #e0f7fa; padding: 20px; display: flex; justify-content: center; }
         .card { width: 100%; max-width: 400px; padding: 20px; background: white; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        input, button { width: 100%; padding: 15px; margin-bottom: 10px; border-radius: 10px; border: 1px solid #ccc; box-sizing: border-box; }
-        button { background: #0288D1; color: white; font-weight: bold; cursor: pointer; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 0.85rem; }
-        th, td { border-bottom: 1px solid #eee; padding: 8px; }
+        .info-panel { background: #f1f9fd; padding: 15px; border-radius: 12px; border-left: 5px solid #0288D1; margin-bottom: 20px; font-size: 0.9rem; }
+        .info-row { display: flex; justify-content: space-between; margin-bottom: 8px; }
+        input, button { width: 100%; padding: 15px; margin-bottom: 15px; border-radius: 12px; border: 1px solid #B3E5FC; box-sizing: border-box; }
+        button { background: #B0BEC5; color: white; font-weight: bold; cursor: not-allowed; }
+        button.active { background: #0288D1; cursor: pointer; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 0.8rem; }
+        th, td { border-bottom: 1px solid #ddd; padding: 10px; text-align: left; }
     </style>
 </head>
 <body>
     <div class="card">
         <h2>Absensi AFJ</h2>
-        <input type="text" id="id" placeholder="ID Karyawan" oninput="debounceInfo()">
-        <button id="btn" onclick="submitAbsen()" disabled>Masukkan ID</button>
+        <div class="info-panel">
+            <div class="info-row"><span>Nama:</span> <span id="namaEmp">-</span></div>
+            <div class="info-row"><span>Jam Masuk:</span> <span id="jamMasukVal">-</span></div>
+            <div class="info-row"><span>Lokasi:</span> <span id="lokasiVal">-</span></div>
+            <div class="info-row"><span>Jarak:</span> <span id="jarakVal">- km</span></div>
+        </div>
+        <input type="text" id="id" placeholder="Masukkan ID Karyawan" oninput="debounceInfo()">
+        <button id="btn" disabled>Masukkan ID Dahulu</button>
         <table>
             <thead><tr><th>Nama</th><th>Masuk</th><th>Keluar</th></tr></thead>
             <tbody id="logBody"></tbody>
@@ -25,13 +34,9 @@
     </div>
 
     <script>
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzLyuh_r73iZBB7uR7bI_7M7akvPNKrTEWhsRmLyWRMytsDNdOG3tOAU3orHfv32twtgA/exec';
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxFkBl8snVaIlLpK2Wqk4M4TGsi2br6eYWSLSddQ1n3AWRDnkjEVyLnAA_1Qy2rq6MLoQ/exec';
         let timer;
-
-        function debounceInfo() {
-            clearTimeout(timer);
-            timer = setTimeout(getInfo, 500);
-        }
+        function debounceInfo() { clearTimeout(timer); timer = setTimeout(getInfo, 500); }
 
         async function getInfo() {
             const id = document.getElementById('id').value;
@@ -40,10 +45,16 @@
                 const res = await fetch(SCRIPT_URL, {method:'POST', body:JSON.stringify({action:'getInfo', employee_id:id, lat:pos.coords.latitude, lng:pos.coords.longitude})});
                 const data = await res.json();
                 if(data.status === 'success') {
+                    document.getElementById('namaEmp').innerText = data.nama;
+                    document.getElementById('jamMasukVal').innerText = data.jamMasuk;
+                    document.getElementById('lokasiVal').innerText = data.office;
+                    document.getElementById('jarakVal').innerText = data.distance + " km";
                     const btn = document.getElementById('btn');
                     btn.disabled = false;
+                    btn.className = "active";
                     btn.innerText = "Absen " + data.nextAction;
                     btn.dataset.tipe = data.nextAction;
+                    btn.onclick = submitAbsen;
                 }
             });
         }
