@@ -28,13 +28,13 @@
         <input type="text" id="id" placeholder="Masukkan ID Karyawan" oninput="debounceInfo()">
         <button id="btn" disabled>Masukkan ID Dahulu</button>
         <table>
-            <thead><tr><th>Nama</th><th>Masuk</th><th>Keluar</th></tr></thead>
+            <thead><tr><th>Nama</th><th>Masuk</th><th>Keluar</th><th>Status</th></tr></thead>
             <tbody id="logBody"></tbody>
         </table>
     </div>
 
     <script>
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxFkBl8snVaIlLpK2Wqk4M4TGsi2br6eYWSLSddQ1n3AWRDnkjEVyLnAA_1Qy2rq6MLoQ/exec';
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbysZl-V7zFh7Igi2t3chf1fMVdKSIxyJ7hSt6n8wgrZndTEabc8R0Axn2RbLPM-mlw5Ew/exec';
         let timer;
         function debounceInfo() { clearTimeout(timer); timer = setTimeout(getInfo, 500); }
 
@@ -70,7 +70,8 @@
         async function loadLogs() {
             const res = await fetch(SCRIPT_URL, {method:'POST', body:JSON.stringify({action:'getLogs'})});
             const data = await res.json();
-            document.getElementById('logBody').innerHTML = data.logs.map(r => `<tr><td>${r.nama}</td><td>${r.masuk}</td><td>${r.keluar}</td></tr>`).join('');
+            document.getElementById('logBody').innerHTML = data.logs.map(r => 
+                `<tr><td>${r.nama}</td><td>${r.masuk}</td><td>${r.keluar}</td><td>${r.status}</td></tr>`).join('');
         }
         window.onload = loadLogs;
     </script>
