@@ -117,14 +117,32 @@
             }
         }
 
-        async function loadLogs() {
-            const res = await fetch(SCRIPT_URL, {method:'POST', body:JSON.stringify({action:'getLogs'})});
-            const data = await res.json();
-            if(data.status === 'success' && data.logs) {
-                document.getElementById('logBody').innerHTML = data.logs.map(r => 
-                    `<tr><td>${r.nama}</td><td>${r.masuk}</td><td>${r.keluar}</td><td>${r.status}</td></tr>`).join('');
+        // KODE BARU DI HTML
+async function loadLogs() {
+    const res = await fetch(SCRIPT_URL, {method:'POST', body:JSON.stringify({action:'getLogs'})});
+    const data = await res.json();
+    
+    if(data.status === 'success' && data.logs) {
+        
+        // === PROSES PENGURUTAN BERTINGKAT DI SISI BROWSER ===
+        data.logs.sort((a, b) => {
+            // 1. Urutkan berdasarkan Jam Masuk (Paling Pagi di Atas)
+            if (a.masuk !== b.masuk) {
+                return a.masuk.localeCompare(b.masuk);
             }
-        }
+            // 2. Jika Jam Masuk sama, urutkan berdasarkan Jam Keluar
+            if (a.keluar !== b.keluar) {
+                return a.keluar.localeCompare(b.keluar);
+            }
+            // 3. Jika Jam Masuk & Keluar sama, urutkan sesuai Abjad Nama
+            return a.nama.localeCompare(b.nama);
+        });
+
+        // Tampilkan data yang SUDAH RAPI ke dalam tabel tabel
+        document.getElementById('logBody').innerHTML = data.logs.map(r => 
+            `<tr><td>${r.nama}</td><td>${r.masuk}</td><td>${r.keluar}</td><td>${r.status}</td></tr>`).join('');
+    }
+}
         window.onload = loadLogs;
     </script>
 </body>
