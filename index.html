@@ -34,7 +34,7 @@
     </div>
 
     <script>
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwFHbuVZW3uVpxnrUWU8IKX3yo25ARr3iOZSmeWmnww3Va03m6UAdPPcfdIjTr7OHURdQ/exec';
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz3-jV4hpEoExHIIsp7wvaQleZNU4BZYfwH9vI885YZEHxm8lITv-F1PAyAtYvtWHSMWA/exec';
         let timer;
 
         function debounceInfo() { clearTimeout(timer); timer = setTimeout(getInfo, 500); }
@@ -55,7 +55,6 @@
             if(id.length < 3) { resetUI(); return; }
             
             const btn = document.getElementById('btn');
-            // State 1: Mengunci tombol menjadi abu-abu saat mengambil data/GPS
             btn.innerText = "Memproses...";
             btn.disabled = true;
             btn.className = "";
@@ -74,7 +73,6 @@
                         document.getElementById('lokasiVal').innerText = data.office;
                         document.getElementById('jarakVal').innerText = data.distance + " km";
                         
-                        // State 2: Aktifkan tombol (Warna Biru) jika sukses terverifikasi
                         btn.disabled = false;
                         btn.className = "active";
                         btn.innerText = "Absen " + data.nextAction;
@@ -93,12 +91,10 @@
 
         async function submitAbsen() {
             const btn = document.getElementById('btn');
-            
-            // State 3: Kunci tombol kembali menjadi abu-abu saat proses submit data berlangsung
             btn.innerText = "Memproses...";
             btn.disabled = true;
             btn.className = ""; 
-            btn.onclick = null; // Cabut fungsi klik instan
+            btn.onclick = null; 
 
             try {
                 const pos = await new Promise((resolve, reject) => {
@@ -120,7 +116,6 @@
             } catch (err) {
                 alert("Gagal mengirim absensi. Pastikan koneksi internet stabil dan GPS aktif.");
             } finally {
-                // Halaman otomatis reload untuk memperbarui tabel log dan mereset tombol
                 location.reload();
             }
         }
