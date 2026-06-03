@@ -65,7 +65,7 @@
 
     <script>
         // MASUKKAN URL DEPLOYMENT APPS SCRIPT ANDA DI SINI
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzcrCo3twR5dmxTnUufVZQVqNc52euJmOmiWnSVXtkiR5NPU2fGiI-VVfpuzsUCIVxtQg/exec';
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwtLWhDVukqoSq_Ik20U-op2eRqzfVwDsyg96IzvjjXYMTsQN8s1NdetrCCbQ8Xihp9nw/exec';
 
         // --- TAHAP 1: PERIKSA ID INSTAN (TANPA TUNGGU GPS) ---
         async function prosesPeriksaID() {
@@ -170,12 +170,37 @@
             document.getElementById('lokasiVal').innerText = "-";
         }
 
-        // --- TAHAP 3: MUAT LOG TRANSPARANSI TIM HARI INI ---
+        // --- TAHAP 3: MUAT LOG TRANSPARANSI TIM HARI INI (DENGAN SORTIR PRIORITAS) ---
         async function loadLogs() {
             try {
                 const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'getLogs' }) });
                 const data = await res.json();
+                
                 if (data.status === 'success' && data.logs) {
+                    
+                    // ========================================================
+                    // LOGIKA SORTIR MULTI-LEVEL (MASUK -> KELUAR -> ALFABET)
+                    // ========================================================
+                    data.logs.sort((a, b) => {
+                        // 1. PRIORITAS UTAMA: Jam Masuk (Urutan waktu terkecil/paling pagi)
+                        if (a.masuk !== b.masuk) {
+                            if (a.masuk === "-") return 1;  // Karyawan yang belum absen masuk digeser ke bawah
+                            if (b.masuk === "-") return -1;
+                            return a.masuk.localeCompare(b.masuk);
+                        }
+                        
+                        // 2. PRIORITAS KEDUA: Jam Keluar (Jika jam masuknya persis sama)
+                        if (a.keluar !== b.keluar) {
+                            if (a.keluar === "-") return 1;  // Yang belum absen pulang digeser ke bawah sesama grupnya
+                            if (b.keluar === "-") return -1;
+                            return a.keluar.localeCompare(b.keluar);
+                        }
+                        
+                        // 3. PRIORITAS KETIGA: Alfabet Nama (Jika jam masuk & keluar kembar identik)
+                        return a.nama.localeCompare(b.nama);
+                    });
+
+                    // Render data yang sudah rapi tersortir ke tabel
                     document.getElementById('logBody').innerHTML = data.logs.map(r => 
                         `<tr>
                             <td><strong>${r.nama}</strong></td>
@@ -189,7 +214,6 @@
                 console.error("Gagal memuat riwayat tabel bawah.");
             }
         }
-
         window.onload = loadLogs;
     </script>
 </body>
