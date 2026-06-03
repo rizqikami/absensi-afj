@@ -3,147 +3,197 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Absensi AFJ</title>
+    <title>Absensi Karyawan AFJ</title>
     <style>
-        body { font-family: sans-serif; background: #e0f7fa; padding: 20px; display: flex; justify-content: center; }
-        .card { width: 100%; max-width: 400px; padding: 20px; background: white; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        .info-panel { background: #f1f9fd; padding: 15px; border-radius: 12px; border-left: 5px solid #0288D1; margin-bottom: 20px; font-size: 0.9rem; }
-        .info-row { display: flex; justify-content: space-between; margin-bottom: 8px; }
-        input, button { width: 100%; padding: 15px; margin-bottom: 15px; border-radius: 12px; border: 1px solid #B3E5FC; box-sizing: border-box; }
-        button { background: #B0BEC5; color: white; font-weight: bold; cursor: not-allowed; transition: 0.3s; border: none; }
-        button.active { background: #0288D1; cursor: pointer; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 0.8rem; }
-        th, td { border-bottom: 1px solid #ddd; padding: 10px; text-align: left; }
+        body { font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 20px; box-sizing: border-box; }
+        .text-center { text-align: center; }
+        .judul-program { color: #2c3e50; margin-bottom: 25px; font-weight: bold; }
+        .input-group { margin-bottom: 15px; }
+        input, button { width: 100%; padding: 12px; margin-top: 5px; border-radius: 6px; border: 1px solid #ccc; box-sizing: border-box; font-size: 16px; }
+        button { background-color: #3498db; color: white; border: none; cursor: pointer; font-weight: bold; }
+        button:disabled { background-color: #bdc3c7; cursor: not-allowed; }
+        .btn-absen { background-color: #2ecc71; margin-top: 10px; display: none; }
+        
+        /* Blok Informasi Berindentasi Sesuai Permintaan */
+        #infoBlock { margin-top: 20px; padding: 15px; background: #f8f9fa; border-left: 5px solid #3498db; display: none; border-radius: 4px; }
+        .info-nama { font-weight: bold; font-size: 18px; color: #2c3e50; margin: 0 0 8px 0; }
+        .info-sub { margin: 0 0 6px 0; padding-left: 20px; color: #555; font-size: 15px; }
+        
+        .status-msg { margin-top: 10px; font-weight: bold; color: #e74c3c; }
+        table { width: 100%; margin-top: 25px; border-collapse: collapse; font-size: 14px; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+        th { background-color: #f2f2f2; }
     </style>
 </head>
 <body>
-    <div class="card">
-        <h2>Absensi AFJ</h2>
-        <div class="info-panel">
-            <div class="info-row"><span>Nama:</span> <span id="namaEmp">-</span></div>
-            <div class="info-row"><span>Lokasi:</span> <span id="lokasiVal">-</span></div>
-            <div class="info-row"><span>Jarak:</span> <span id="jarakVal">- km</span></div>
-        </div>
-        <input type="text" id="id" placeholder="Masukkan ID Karyawan" oninput="debounceInfo()">
-        <button id="btn" disabled>Masukkan ID Dahulu</button>
-        <table>
-            <thead><tr><th>Nama</th><th>Masuk</th><th>Keluar</th><th>Status</th></tr></thead>
-            <tbody id="logBody"></tbody>
-        </table>
+
+    <h2 class="judul-program text-center">Absensi Karyawan AFJ</h2>
+
+    <div class="input-group">
+        <label for="employeeId">Masukkan ID Karyawan Anda:</label>
+        <input type="text" id="employeeId" placeholder="Contoh: AFJ001">
+        <button id="btnCheckID" onclick="verifyEmployeeID()">Periksa Data ID</button>
     </div>
 
+    <div id="statusMessage" class="status-msg text-center"></div>
+
+    <div id="infoBlock">
+        <p class="info-nama" id="lblNama"></p>
+        <p class="info-sub" id="lblJabatan"></p>
+        <p class="info-sub" id="lblLokasi"></p>
+        
+        <button id="btnMasuk" class="btn-absen" onclick="prosesAbsen('Masuk')">Absen Masuk</button>
+        <button id="btnKeluar" class="btn-absen" style="background-color: #e67e22;" onclick="prosesAbsen('Keluar')">Absen Keluar</button>
+    </div>
+
+    <h3 style="margin-top: 30px;">Daftar Absensi Hari Ini</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Nama Karyawan</th>
+                <th>Jabatan</th>
+                <th>Estimasi Lokasi</th>
+            </tr>
+        </thead>
+        <tbody id="logBody">
+            </tbody>
+    </table>
+
     <script>
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwzuyu4iTs8-Vsl2wkitcxKhVt1FcyyTcV7ph8tan-yUY5x-2RGhsJmpCtJZs_6upIpjA/exec';
-        let timer;
+        // MASUKKAN URL DEPLOYMENT BARU ANDA DI SINI
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyX9uypfPt88md7DID6i6JkY8x1_FkVv7pTmBRil5EugBJQ93cDg_DQ1tX0c-XtUr4XwA/exec"; 
+        let currentAccuracy = 0;
+        let currentLat = 0;
+        let currentLng = 0;
 
-        function debounceInfo() { clearTimeout(timer); timer = setTimeout(getInfo, 500); }
-
-        function resetUI() {
-            const btn = document.getElementById('btn');
-            btn.disabled = true;
-            btn.className = "";
-            btn.innerText = "Masukkan ID Dahulu";
-            document.getElementById('namaEmp').innerText = "-";
-            document.getElementById('lokasiVal').innerText = "-";
-            document.getElementById('jarakVal').innerText = "- km";
+        // Kunci GPS berjalan pasif di background sejak web dibuka
+        if (navigator.geolocation) {
+            navigator.geolocation.watchPosition(
+                (pos) => {
+                    currentLat = pos.coords.latitude;
+                    currentLng = pos.coords.longitude;
+                    currentAccuracy = pos.coords.accuracy; // Menangkap keakuratan sensor dlm meter
+                }, 
+                (err) => { console.warn("GPS belum terkunci sempurna."); },
+                { enableHighAccuracy: true, timeout: 10000 }
+            );
         }
 
-        async function getInfo() {
-            const id = document.getElementById('id').value;
-            if(id.length < 3) { resetUI(); return; }
+        // Elegan Delay Handling: Validasi Manual Atas Keyakinan Karyawan
+        async function verifyEmployeeID() {
+            const idInput = document.getElementById('employeeId');
+            const btnCheck = document.getElementById('btnCheckID');
+            const statusMsg = document.getElementById('statusMessage');
+            const infoBlk = document.getElementById('infoBlock');
             
-            const btn = document.getElementById('btn');
-            btn.innerText = "Memproses...";
-            btn.disabled = true;
-            btn.className = "";
+            if (!idInput.value.trim()) {
+                statusMsg.innerText = "Silakan isi ID terlebih dahulu!";
+                return;
+            }
 
-            navigator.geolocation.getCurrentPosition(async (pos) => {
-                try {
-                    const res = await fetch(SCRIPT_URL, {
-                        method:'POST', 
-                        body:JSON.stringify({action:'getInfo', employee_id:id, lat:pos.coords.latitude, lng:pos.coords.longitude})
-                    });
-                    const data = await res.json();
-                    
-                    if(data.status === 'success') {
-                        document.getElementById('namaEmp').innerText = data.nama;
-                        document.getElementById('lokasiVal').innerText = data.office;
-                        document.getElementById('jarakVal').innerText = data.distance + " km";
-                        
-                        btn.disabled = false;
-                        btn.className = "active";
-                        btn.innerText = "Absen " + data.nextAction;
-                        btn.dataset.tipe = data.nextAction;
-                        btn.onclick = submitAbsen;
-                    } else {
-                        btn.innerText = data.message || "ID tidak ditemukan";
-                    }
-                } catch(err) {
-                    btn.innerText = "Gangguan Jaringan";
-                }
-            }, (err) => {
-                btn.innerText = "Gagal Mengunci GPS";
-            }, { enableHighAccuracy: true, timeout: 7000 });
-        }
-
-        async function submitAbsen() {
-            const btn = document.getElementById('btn');
-            btn.innerText = "Memproses...";
-            btn.disabled = true;
-            btn.className = ""; 
-            btn.onclick = null; 
+            // Atur Kondisi Loading Protektif
+            idInput.disabled = true;
+            btnCheck.disabled = true;
+            btnCheck.innerText = "⏳ Sedang Memproses Data...";
+            statusMsg.innerText = ""; 
+            infoBlk.style.display = "none";
 
             try {
-                const pos = await new Promise((resolve, reject) => {
-                    navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, timeout: 7000 });
-                });
-                
                 const res = await fetch(SCRIPT_URL, {
-                    method:'POST', 
-                    body:JSON.stringify({
-                        employee_id: document.getElementById('id').value, 
-                        tipe_absen: btn.dataset.tipe, 
-                        lat: pos.coords.latitude, 
-                        lng: pos.coords.longitude
-                    })
+                    method: 'POST',
+                    body: JSON.stringify({ action: 'checkID', employee_id: idInput.value.trim() })
                 });
-                
                 const data = await res.json();
-                alert(data.message);
-            } catch (err) {
-                alert("Gagal mengirim absensi. Pastikan koneksi internet stabil dan GPS aktif.");
+
+                if (data.status === 'success') {
+                    document.getElementById('lblNama').innerText = data.nama;
+                    document.getElementById('lblJabatan').innerText = "➔ Jabatan: " + data.jabatan;
+                    document.getElementById('lblLokasi').innerText = "➔ Estimasi Lokasi: Mencari titik kantor terdekat...";
+                    infoBlk.style.display = "block";
+                    
+                    // Aktifkan Tombol Absen Utama
+                    document.getElementById('btnMasuk').style.display = "block";
+                    document.getElementById('btnKeluar').style.display = "block";
+                } else {
+                    statusMsg.innerText = data.message;
+                    idInput.disabled = false;
+                }
+            } catch (e) {
+                statusMsg.innerText = "Gagal terhubung ke server, coba lagi.";
+                idInput.disabled = false;
             } finally {
-                location.reload();
+                btnCheck.disabled = false;
+                btnCheck.innerText = "Periksa Data ID";
             }
         }
 
-        // KODE BARU DI HTML
-async function loadLogs() {
-    const res = await fetch(SCRIPT_URL, {method:'POST', body:JSON.stringify({action:'getLogs'})});
-    const data = await res.json();
-    
-    if(data.status === 'success' && data.logs) {
-        
-        // === PROSES PENGURUTAN BERTINGKAT DI SISI BROWSER ===
-        data.logs.sort((a, b) => {
-            // 1. Urutkan berdasarkan Jam Masuk (Paling Pagi di Atas)
-            if (a.masuk !== b.masuk) {
-                return a.masuk.localeCompare(b.masuk);
-            }
-            // 2. Jika Jam Masuk sama, urutkan berdasarkan Jam Keluar
-            if (a.keluar !== b.keluar) {
-                return a.keluar.localeCompare(b.keluar);
-            }
-            // 3. Jika Jam Masuk & Keluar sama, urutkan sesuai Abjad Nama
-            return a.nama.localeCompare(b.nama);
-        });
+        async function prosesAbsen(tipe) {
+            const idInput = document.getElementById('employeeId');
+            const btnM = document.getElementById('btnMasuk');
+            const btnK = document.getElementById('btnKeluar');
+            const statusMsg = document.getElementById('statusMessage');
 
-        // Tampilkan data yang SUDAH RAPI ke dalam tabel tabel
-        document.getElementById('logBody').innerHTML = data.logs.map(r => 
-            `<tr><td>${r.nama}</td><td>${r.masuk}</td><td>${r.keluar}</td><td>${r.status}</td></tr>`).join('');
-    }
-}
-        window.onload = loadLogs;
+            btnM.disabled = true; btnK.disabled = true;
+            btnM.innerText = "Memproses..."; btnK.innerText = "Memproses...";
+
+            try {
+                const res = await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        action: 'submitAbsen',
+                        employee_id: idInput.value.trim(),
+                        tipe_absen: tipe,
+                        lat: currentLat,
+                        lng: currentLng,
+                        accuracy: currentAccuracy // Data forensik dikirim ke backend
+                    })
+                });
+                const data = await res.json();
+                
+                alert(data.message);
+                if(data.status === 'success') {
+                    // Reset Tampilan ke Awal
+                    idInput.disabled = false;
+                    idInput.value = "";
+                    document.getElementById('infoBlock').style.style.display = "none";
+                    loadLogs();
+                }
+            } catch(e) {
+                alert("Koneksi gagal saat mengirim data absen.");
+            } finally {
+                btnM.disabled = false; btnK.disabled = false;
+                btnM.innerText = "Absen Masuk"; btnK.innerText = "Absen Keluar";
+            }
+        }
+
+        // Memuat tabel berdasarkan urutan baru: Nama -> Jabatan -> Estimasi Lokasi
+        async function loadLogs() {
+            try {
+                const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'getLogs' }) });
+                const data = await res.json();
+                if (data.status === 'success' && data.logs) {
+                    
+                    // Urutkan Log secara bertingkat di browser (Masuk -> Keluar -> Abjad Nama)
+                    data.logs.sort((a, b) => {
+                        if (a.waktu !== b.waktu) return a.waktu.localeCompare(b.waktu);
+                        return a.nama.localeCompare(b.nama);
+                    });
+
+                    // Render ke tabel dengan struktur kolom: Nama Karyawan | Jabatan | Estimasi Lokasi
+                    // Catatan: Karena logs umum tidak memuat jabatan per baris, kita tampilkan kantor & statusnya
+                    document.getElementById('logBody').innerHTML = data.logs.map(r => 
+                        `<tr>
+                            <td>${r.nama}</td>
+                            <td>Staff Kantor</td> 
+                            <td>${r.kantor} (${r.status})</td>
+                         </tr>`
+                    ).join('');
+                }
+            } catch (e) { console.error("Gagal memuat log data tabel."); }
+        }
+
+        // Muat log saat halaman pertama kali dibuka
+        loadLogs();
     </script>
 </body>
 </html>
