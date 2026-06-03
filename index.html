@@ -3,197 +3,194 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Absensi Karyawan AFJ</title>
+    <title>Sistem Absensi Karyawan AFJ</title>
     <style>
-        body { font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 20px; box-sizing: border-box; }
-        .text-center { text-align: center; }
-        .judul-program { color: #2c3e50; margin-bottom: 25px; font-weight: bold; }
-        .input-group { margin-bottom: 15px; }
-        input, button { width: 100%; padding: 12px; margin-top: 5px; border-radius: 6px; border: 1px solid #ccc; box-sizing: border-box; font-size: 16px; }
-        button { background-color: #3498db; color: white; border: none; cursor: pointer; font-weight: bold; }
-        button:disabled { background-color: #bdc3c7; cursor: not-allowed; }
-        .btn-absen { background-color: #2ecc71; margin-top: 10px; display: none; }
+        body { font-family: sans-serif; background: #e0f7fa; padding: 20px; display: flex; justify-content: center; margin: 0; }
+        .card { width: 100%; max-width: 400px; padding: 25px; background: white; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); box-sizing: border-box; }
         
-        /* Blok Informasi Berindentasi Sesuai Permintaan */
-        #infoBlock { margin-top: 20px; padding: 15px; background: #f8f9fa; border-left: 5px solid #3498db; display: none; border-radius: 4px; }
-        .info-nama { font-weight: bold; font-size: 18px; color: #2c3e50; margin: 0 0 8px 0; }
-        .info-sub { margin: 0 0 6px 0; padding-left: 20px; color: #555; font-size: 15px; }
+        /* Judul Mutlak di Tengah */
+        .judul-program { text-align: center; color: #2c3e50; margin-top: 0; margin-bottom: 20px; font-weight: bold; }
         
-        .status-msg { margin-top: 10px; font-weight: bold; color: #e74c3c; }
-        table { width: 100%; margin-top: 25px; border-collapse: collapse; font-size: 14px; }
-        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
-        th { background-color: #f2f2f2; }
+        /* Panel Informasi Atas Berindentasi Rapi */
+        .info-panel { background: #f1f9fd; padding: 15px; border-radius: 12px; border-left: 5px solid #0288D1; margin-bottom: 20px; }
+        .info-row { display: flex; margin-bottom: 10px; font-size: 0.95rem; line-height: 1.4; }
+        .info-row:last-child { margin-bottom: 0; }
+        .info-label { width: 75px; font-weight: bold; color: #555; shrink: 0; }
+        .info-value { padding-left: 15px; color: #222; word-break: break-word; } /* Indentasi teks nilai masuk ke dalam */
+
+        input, button { width: 100%; padding: 15px; margin-bottom: 15px; border-radius: 12px; border: 1px solid #B3E5FC; box-sizing: border-box; font-size: 16px; }
+        input:focus { outline: none; border-color: #0288D1; }
+        
+        button { background: #0288D1; color: white; font-weight: bold; cursor: pointer; transition: 0.3s; border: none; }
+        button:disabled { background: #B0BEC5; cursor: not-allowed; }
+        
+        /* Gaya Khusus Tombol Berdasarkan Aksi Dinamis */
+        button.btn-masuk { background: #2ecc71; }
+        button.btn-pulang { background: #e67e22; }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 25px; font-size: 0.85rem; }
+        th, td { border-bottom: 1px solid #ddd; padding: 12px 8px; text-align: left; }
+        th { color: #555; font-weight: bold; background-color: #f8f9fa; }
+        tr:hover { background-color: #f1f9fd; }
     </style>
 </head>
 <body>
 
-    <h2 class="judul-program text-center">Absensi Karyawan AFJ</h2>
-
-    <div class="input-group">
-        <label for="employeeId">Masukkan ID Karyawan Anda:</label>
-        <input type="text" id="employeeId" placeholder="Contoh: AFJ001">
-        <button id="btnCheckID" onclick="verifyEmployeeID()">Periksa Data ID</button>
-    </div>
-
-    <div id="statusMessage" class="status-msg text-center"></div>
-
-    <div id="infoBlock">
-        <p class="info-nama" id="lblNama"></p>
-        <p class="info-sub" id="lblJabatan"></p>
-        <p class="info-sub" id="lblLokasi"></p>
+    <div class="card">
+        <h2 class="judul-program">Absensi Karyawan AFJ</h2>
         
-        <button id="btnMasuk" class="btn-absen" onclick="prosesAbsen('Masuk')">Absen Masuk</button>
-        <button id="btnKeluar" class="btn-absen" style="background-color: #e67e22;" onclick="prosesAbsen('Keluar')">Absen Keluar</button>
-    </div>
+        <div class="info-panel">
+            <div class="info-row"><span class="info-label">Nama:</span><span id="namaEmp" class="info-value">-</span></div>
+            <div class="info-row"><span class="info-label">Jabatan:</span><span id="jabatanEmp" class="info-value">-</span></div>
+            <div class="info-row"><span class="info-label">Lokasi:</span><span id="lokasiVal" class="info-value">-</span></div>
+        </div>
 
-    <h3 style="margin-top: 30px;">Daftar Absensi Hari Ini</h3>
-    <table>
-        <thead>
-            <tr>
-                <th>Nama Karyawan</th>
-                <th>Jabatan</th>
-                <th>Estimasi Lokasi</th>
-            </tr>
-        </thead>
-        <tbody id="logBody">
-            </tbody>
-    </table>
+        <input type="text" id="idKaryawan" placeholder="Masukkan ID Karyawan">
+        
+        <button id="btnUtama" onclick="prosesPeriksaID()">Periksa Data ID</button>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Nama</th>
+                    <th>Masuk</th>
+                    <th>Keluar</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody id="logBody">
+                </tbody>
+        </table>
+    </div>
 
     <script>
-        // MASUKKAN URL DEPLOYMENT BARU ANDA DI SINI
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyX9uypfPt88md7DID6i6JkY8x1_FkVv7pTmBRil5EugBJQ93cDg_DQ1tX0c-XtUr4XwA/exec"; 
-        let currentAccuracy = 0;
-        let currentLat = 0;
-        let currentLng = 0;
+        // MASUKKAN URL DEPLOYMENT APPS SCRIPT ANDA DI SINI
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz3-jV4hpEoExHIIsp7wvaQleZNU4BZYfwH9vI885YZEHxm8lITv-F1PAyAtYvtWHSMWA/exec';
 
-        // Kunci GPS berjalan pasif di background sejak web dibuka
-        if (navigator.geolocation) {
-            navigator.geolocation.watchPosition(
-                (pos) => {
-                    currentLat = pos.coords.latitude;
-                    currentLng = pos.coords.longitude;
-                    currentAccuracy = pos.coords.accuracy; // Menangkap keakuratan sensor dlm meter
-                }, 
-                (err) => { console.warn("GPS belum terkunci sempurna."); },
-                { enableHighAccuracy: true, timeout: 10000 }
-            );
-        }
+        // --- TAHAP 1: PERIKSA ID INSTAN (TANPA TUNGGU GPS) ---
+        async function prosesPeriksaID() {
+            const idInput = document.getElementById('idKaryawan');
+            const btn = document.getElementById('btnUtama');
+            const idValue = idInput.value.trim();
 
-        // Elegan Delay Handling: Validasi Manual Atas Keyakinan Karyawan
-        async function verifyEmployeeID() {
-            const idInput = document.getElementById('employeeId');
-            const btnCheck = document.getElementById('btnCheckID');
-            const statusMsg = document.getElementById('statusMessage');
-            const infoBlk = document.getElementById('infoBlock');
-            
-            if (!idInput.value.trim()) {
-                statusMsg.innerText = "Silakan isi ID terlebih dahulu!";
+            if (idValue.length < 3) {
+                alert("Silakan masukkan ID Karyawan yang valid terlebih dahulu!");
                 return;
             }
 
-            // Atur Kondisi Loading Protektif
+            // Kunci UI & Set Loading Status Protektif
             idInput.disabled = true;
-            btnCheck.disabled = true;
-            btnCheck.innerText = "⏳ Sedang Memproses Data...";
-            statusMsg.innerText = ""; 
-            infoBlk.style.display = "none";
+            btn.disabled = true;
+            btn.innerText = "⏳ Sedang Proses...";
 
             try {
                 const res = await fetch(SCRIPT_URL, {
                     method: 'POST',
-                    body: JSON.stringify({ action: 'checkID', employee_id: idInput.value.trim() })
+                    body: JSON.stringify({ action: 'getInfo', employee_id: idValue })
                 });
                 const data = await res.json();
 
                 if (data.status === 'success') {
-                    document.getElementById('lblNama').innerText = data.nama;
-                    document.getElementById('lblJabatan').innerText = "➔ Jabatan: " + data.jabatan;
-                    document.getElementById('lblLokasi').innerText = "➔ Estimasi Lokasi: Mencari titik kantor terdekat...";
-                    infoBlk.style.display = "block";
+                    // Update Informasi Panel Atas dengan Indentasi Rapi
+                    document.getElementById('namaEmp').innerText = data.nama;
+                    document.getElementById('jabatanEmp').innerText = data.jabatan;
+                    document.getElementById('lokasiVal').innerText = "Akan ditentukan saat tombol absen ditekan";
+
+                    // Ubah Tombol Menjadi Kendali Akses Kirim Absen Dinamis
+                    btn.disabled = false;
+                    btn.innerText = "Absen " + data.nextAction;
                     
-                    // Aktifkan Tombol Absen Utama
-                    document.getElementById('btnMasuk').style.display = "block";
-                    document.getElementById('btnKeluar').style.display = "block";
+                    // Berikan warna tombol berbeda agar interaktif
+                    if (data.nextAction === "Masuk") {
+                        btn.className = "btn-masuk";
+                    } else {
+                        btn.className = "btn-pulang";
+                    }
+
+                    // Alihkan fungsi klik tombol menuju fungsi submit absensi
+                    btn.onclick = function() { prosesKirimAbsen(data.nextAction); };
                 } else {
-                    statusMsg.innerText = data.message;
-                    idInput.disabled = false;
+                    alert(data.message);
+                    resetAwalUI();
                 }
-            } catch (e) {
-                statusMsg.innerText = "Gagal terhubung ke server, coba lagi.";
-                idInput.disabled = false;
-            } finally {
-                btnCheck.disabled = false;
-                btnCheck.innerText = "Periksa Data ID";
+            } catch (err) {
+                alert("Gangguan komunikasi ke server database.");
+                resetAwalUI();
             }
         }
 
-        async function prosesAbsen(tipe) {
-            const idInput = document.getElementById('employeeId');
-            const btnM = document.getElementById('btnMasuk');
-            const btnK = document.getElementById('btnKeluar');
-            const statusMsg = document.getElementById('statusMessage');
+        // --- TAHAP 2: KUNCI GPS & KIRIM DATA ABSENSI ---
+        function prosesKirimAbsen(tipeTarget) {
+            const idInput = document.getElementById('idKaryawan');
+            const btn = document.getElementById('btnUtama');
+            
+            btn.disabled = true;
+            btn.className = "";
+            btn.innerText = "⏳ Mengunci GPS & Mengirim...";
 
-            btnM.disabled = true; btnK.disabled = true;
-            btnM.innerText = "Memproses..."; btnK.innerText = "Memproses...";
-
-            try {
-                const res = await fetch(SCRIPT_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({
-                        action: 'submitAbsen',
-                        employee_id: idInput.value.trim(),
-                        tipe_absen: tipe,
-                        lat: currentLat,
-                        lng: currentLng,
-                        accuracy: currentAccuracy // Data forensik dikirim ke backend
-                    })
-                });
-                const data = await res.json();
-                
-                alert(data.message);
-                if(data.status === 'success') {
-                    // Reset Tampilan ke Awal
-                    idInput.disabled = false;
-                    idInput.value = "";
-                    document.getElementById('infoBlock').style.style.display = "none";
-                    loadLogs();
+            // Sensor GPS baru dipicu berputar di sini demi efisiensi waktu karyawan
+            navigator.geolocation.getCurrentPosition(async (pos) => {
+                try {
+                    const res = await fetch(SCRIPT_URL, {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            action: 'submitAbsen',
+                            employee_id: idInput.value.trim(),
+                            tipe_absen: tipeTarget,
+                            lat: pos.coords.latitude,
+                            lng: pos.coords.longitude,
+                            accuracy: pos.coords.accuracy // Data forensik akurasi dikirim ke server
+                        })
+                    });
+                    const data = await res.json();
+                    alert(data.message);
+                } catch (err) {
+                    alert("Koneksi internet bermasalah, gagal mengirim data absensi.");
+                } finally {
+                    // Segarkan halaman total agar sistem kembali bersih dan memuat data terbaru
+                    location.reload();
                 }
-            } catch(e) {
-                alert("Koneksi gagal saat mengirim data absen.");
-            } finally {
-                btnM.disabled = false; btnK.disabled = false;
-                btnM.innerText = "Absen Masuk"; btnK.innerText = "Absen Keluar";
-            }
+            }, (err) => {
+                alert("Gagal mengunci titik koordinat. Pastikan izin GPS perangkat Anda sudah aktif!");
+                btn.disabled = false;
+                btn.innerText = "Absen " + tipeTarget;
+                if (tipeTarget === "Masuk") btn.className = "btn-masuk"; else btn.className = "btn-pulang";
+            }, { enableHighAccuracy: true, timeout: 10000 });
         }
 
-        // Memuat tabel berdasarkan urutan baru: Nama -> Jabatan -> Estimasi Lokasi
+        function resetAwalUI() {
+            document.getElementById('idKaryawan').disabled = false;
+            const btn = document.getElementById('btnUtama');
+            btn.disabled = false;
+            btn.className = "";
+            btn.innerText = "Periksa Data ID";
+            btn.onclick = prosesPeriksaID;
+            document.getElementById('namaEmp').innerText = "-";
+            document.getElementById('jabatanEmp').innerText = "-";
+            document.getElementById('lokasiVal').innerText = "-";
+        }
+
+        // --- TAHAP 3: MUAT LOG TRANSPARANSI TIM HARI INI ---
         async function loadLogs() {
             try {
                 const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'getLogs' }) });
                 const data = await res.json();
                 if (data.status === 'success' && data.logs) {
-                    
-                    // Urutkan Log secara bertingkat di browser (Masuk -> Keluar -> Abjad Nama)
-                    data.logs.sort((a, b) => {
-                        if (a.waktu !== b.waktu) return a.waktu.localeCompare(b.waktu);
-                        return a.nama.localeCompare(b.nama);
-                    });
-
-                    // Render ke tabel dengan struktur kolom: Nama Karyawan | Jabatan | Estimasi Lokasi
-                    // Catatan: Karena logs umum tidak memuat jabatan per baris, kita tampilkan kantor & statusnya
                     document.getElementById('logBody').innerHTML = data.logs.map(r => 
                         `<tr>
-                            <td>${r.nama}</td>
-                            <td>Staff Kantor</td> 
-                            <td>${r.kantor} (${r.status})</td>
+                            <td><strong>${r.nama}</strong></td>
+                            <td>${r.masuk}</td>
+                            <td>${r.keluar}</td>
+                            <td>${r.status}</td>
                          </tr>`
                     ).join('');
                 }
-            } catch (e) { console.error("Gagal memuat log data tabel."); }
+            } catch (e) {
+                console.error("Gagal memuat riwayat tabel bawah.");
+            }
         }
 
-        // Muat log saat halaman pertama kali dibuka
-        loadLogs();
+        window.onload = loadLogs;
     </script>
 </body>
 </html>
